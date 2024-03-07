@@ -1,1 +1,5 @@
-"# data_engineering_project" 
+# Data Engineering Project
+
+Inspiration: Zach Wilson (https://www.linkedin.com/in/eczachly/)
+
+Link to LinkedIn Article: https://www.linkedin.com/posts/eczachly_dataengineering-activity-7167949764481761280-FlYh/?utm_source=share&utm_medium=member_ios
