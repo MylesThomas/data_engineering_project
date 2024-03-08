@@ -6,6 +6,7 @@ contourpy==1.2.0
 cycler==0.12.1
 fonttools==4.49.0
 frozendict==2.4.0
+google==3.0.0
 html5lib==1.1
 idna==3.6
 kiwisolver==1.4.5
