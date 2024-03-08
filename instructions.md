@@ -482,26 +482,24 @@ Directions:
 
 - What this does: Gives us a full local development environment
 
+- Prequisites:
+    - Check that you have Hyper-V enabled on Windows
+
+        ```
+        systeminfo.exe
+        ```
+
+        - You should see 'Yes' for the following Hyper-V Requirements:
+            - VM Monitor Mode Extensions: Yes
+            - Virtualization Enabled In Firmware: Yes
+            - Second Level Address Translation: Yes
+            - Data Execution Prevention Available: Yes
+
+        - Another method of checking: Task manager -> Performance -> Virtualization should read 'Enabled'
+
 - Instructions:
 
     - [Step 1: Install the Astro CLI](https://docs.astronomer.io/astro/first-dag-cli?tab=windowswithwinget#install-the-astro-cli)
-        - Make sure you have the following: 
-            - Winget installed: winget --version
-            - Enable Hyper-V:
-                - Check if you have it already done: Command Prompt -> systeminfo.exe
-                    - If not, continue.
-                - Enable Virtualization Technology & Data Execution Prevention (DEP) in BIOS:
-                    - Restart the computer and repeatedly press one of these keys: F2, F10, F8, F12 or Del* when the computer manufacturer's logo appears on the screen to enter the BIOS/UEFI settings (* The key may vary from manufacturer to manufacturer)
-                    - Enable Virtualization in BIOS:
-                        - Intel CPU: Click the Advanced* tab and set the Virtualization aka "Intel® Virtualization Technology (VT-x)" to Enable.
-
-                - Enable Data Execution Prevention (DEP) in BIOS:
-                    - Control Panel -> System and Security -> System -> Advanced system settings -> Performance -> Settings -> Data Execution Prevention -> Turn on DEP
-
-                - 10 more steps continue [here](https://www.wintips.org/how-to-enable-hyper-v-on-windows-10-11-home/) ........
-
-            - The latest version of the [Windows App Installer](https://apps.microsoft.com/detail/9nblggh4nns1?hl=en-ca&gl=ca)
-            - Windows 10 1709 (build 16299) or later or Windows 11. (Duh)
 
         - Open Windows Powershell (as admin) and run the following command:
 
@@ -515,8 +513,9 @@ Directions:
             $env:path.split(";")
             ```
 
-        - Copy this path
-            - It should look like this: C:\Users\myname\AppData\Local\Microsoft\WinGet\Packages\Astronomer.Astro_Microsoft.Winget.Source_8wekyb3d8bbwe
+        - Copy this path - it should look something like this:
+            - C:\Users\myname\AppData\Local\Microsoft\WinGet\Packages\Astronomer.Astro_Microsoft.Winget.Source_8wekyb3d8bbwe
+            - C:\Users\Myles\AppData\Local\Microsoft\WinGet\Packages\Astronomer.Astro_Microsoft.Winget.Source_8wekyb3d8bbwe
 
         - Paste the path into File Explorer or open the file path in terminal, then rename the Astro executable to astro.exe
 
@@ -541,7 +540,6 @@ Directions:
         - Create a new folder for your Astro project (for now, put it in your current repo/project):
 
             ```
-            cd data_engineering_project
             mkdir first_astro_project
             ```
 
@@ -597,6 +595,16 @@ Directions:
             astro deploy --dags
             ```
 
+            Note: You may need to force deploy (Typically you'd like to avoid this, but here is a possible remedy):
+
+            Get the ID from https://cloud.astronomer.io/ -> Deployments -> Deployment1:
+
+            Force deploy:
+
+            ```
+            astro deploy cltivfzom022g01m1vkg2yngd -f
+            ```
+
         - This command returns a list of Deployments available in your Workspace and prompts you to confirm where you want to deploy your DAG code.
             - Select '1' for Deployment1
 
@@ -610,8 +618,8 @@ Directions:
 
         - In the Deployment page of the Cloud UI, click the Open Airflow button.
             - ie. Deployments -> Deployment1 -> 'Open Airflow'
-
-        - In the main DAGs view of the Airflow UI, click the slider button next to example-dag-basic to unpause it. If you hover over the DAG, it says DAG is Active. When you do this, the DAG starts to run on the schedule that is defined in its code.
+                - Click the slider button next to example-dag-basic to unpause it.
+                - If you hover over the DAG, it says DAG is Active. When you do this, the DAG starts to run on the schedule that is defined in its code.
 
         - Optional: Manually trigger a DAG run of example-dag-basic by clicking the play button in the Actions column. When you develop DAGs on Astro, triggering a DAG run instead of waiting for the DAG schedule can help you quickly identify and resolve issues.
             - After you press Play, the Runs and Recent Tasks sections for the DAG start to populate with data.
@@ -630,8 +638,6 @@ Directions:
 
             - When you're done exploring, you can delete your Deployment from the More Options menu on your Deployments page.
 
-    
-    
 
 4. Deploy a DAG
 - What this does: Deploys DAGs from our local development environment to the production Airflow environment in the cloud
@@ -648,7 +654,6 @@ Directions:
         - My filename: `my_first_dag.py`
 
     - Add the same logic that you created in the initial `main.py` file that is interacting with BigQuery.
-        - 
 
     - Now that your dag is ready for testing, let's setup Docker.
 
@@ -660,11 +665,17 @@ Directions:
 
 - Instructions:
     - https://docs.docker.com/desktop/install/windows-install/ -> Docker Desktop for Windows
-    - 
     - Restart Computer
-    - 
-    
-docker ps
+    - Check that Docker works:
+        - Start Docker Desktop
+
+        - Try these commands:
+
+            ```
+            docker version
+            docker ps
+            ```
+
 
 7. Deploy your DAG
 - Instructions:
@@ -689,6 +700,9 @@ docker ps
         ```
         
         - Select '1' for 'Deployment1'
+
+    - Note: I was getting errors here ie. 'Project directory has uncommitted changes, use `astro deploy [deployment-id] -f` to force deploy.'
+        - Remedy: Go back to `data_engineering_project` and push changes to git regularly.
 
     - Check on your deployment in the UI:
         - There are links you can copy/paste
@@ -724,8 +738,8 @@ WARNING: Airflow is designed to handle orchestration of data pipelines in batche
 7. [Error Response without leveraging CREATE OR UPDATE](https://stackoverflow.com/questions/3825990/http-response-code-for-post-when-resource-already-exists)
 8. [When to use Kubernetes Executor](https://forum.astronomer.io/t/when-to-use-kubernetes-executor/1289)
 9. [How to Get Started with Astro!](https://www.youtube.com/watch?v=Gvw1QZ4oUiw&t=45s)
-10. []()
-11. []()
+10. [Docker cannot start on Windows](https://stackoverflow.com/questions/40459280/docker-cannot-start-on-windows)
+11. [Troubleshoot topics for Docker Desktop](https://docs.docker.com/desktop/troubleshoot/topics/#virtualization)
 12. []()
 13. []()
 
