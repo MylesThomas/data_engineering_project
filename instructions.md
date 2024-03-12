@@ -55,10 +55,16 @@ deactivate
 
 Install the necessary packages into your virtual environment:
 
+```take out: apache-airflow pendulum
+
+pip install pandas numpy yfinance google-cloud google-cloud-bigquery google-cloud-storage pyarrow
+
 ```
-pip install pandas numpy matplotlib seaborn yfinance apache-airflow pendulum
-```
-google-cloud-bigquery
+
+Note: Make sure you are as minimalist as possible here, it can lead to errors:
+- Error message: ERROR: failed to solve: process "/bin/bash -o pipefail -e -u -x -c if grep -Eqx 'apache-airflow\\s*[=~>]{1,2}.*' requirements.txt; then     echo >&2 \"Do not upgrade by specifying 'apache-airflow' in your requirements.txt, change the base image instead!\";  exit 1;   fi;   pip install --no-cache-dir --root-user-action=ignore -r requirements.txt" did not complete successfully: exit code: 1
+- Remedy: Stopped `astro dev stop, astro dev start` (`astro dev restart` could have worked probably...)
+
 Create a requirements.txt file to ensure that you have the necessary dependencies to run this code:
 
 ```
@@ -537,7 +543,7 @@ Directions:
     - [Step 3: Create an Astro project](https://docs.astronomer.io/astro/first-dag-cli?tab=windowswithwinget#step-3-create-an-astro-project)
         - Open terminal/command line.
         
-        - Create a new folder for your Astro project (for now, put it in your current repo/project):
+        - Create a new folder for your Astro project/repository:
 
             ```
             mkdir first_astro_project
@@ -650,34 +656,171 @@ Directions:
 
 - Instructions:
     - Create a new `.py` file and save it to the `dags` folder
-        - You can start by copy/pasting `.py`, if you want a good start for an ETL script.
-        - My filename: `my_first_dag.py`
+        - You can start by copy/pasting `example_dag_basic.py`, if you want a good start for an ETL script.
+        - My test filename: `example_dag_basic_v2.py`
+            - Keep the same logic, just switch the code up a little bit during the Extract step.
 
-    - Add the same logic that you created in the initial `main.py` file that is interacting with BigQuery.
+        - My first filename: `my_first_dag.py`
+            - Add the same logic that you created in the initial `main.py` file that is interacting with BigQuery.
 
-    - Now that your dag is ready for testing, let's setup Docker.
+            - Note: MAKE SURE THAT YOU HAVE THE NECESSARY KEYS ie. key.json in the project directory! (Trying out both the root directory, which did NOT work, and the /include directory...)
 
-6. Download Docker
+    - Now that your dag is ready for testing, let's setup Docker so that we can test our project in a local airflow environment, and eventually deploy our code to a Deployment on Astro.
+
+Warning Note: Default DAG examples will have module `pendulum` imported for the datetime, comment this out, import datetime, and use datetime.datetime
+
+6. Download Docker (and Windows Subsystem for Linux)
 - Link: https://docs.docker.com/
 - What is Docker: Docker is an open platform for developing, shipping, and running applications.
     - Docker packages software into standardized units called containers that have everything the software needs to run including libraries, system tools, code, and runtime
         - which means that developers can easily ship their applications to other environments without having to worry about dependencies or configuration issues.
 
 - Instructions:
-    - https://docs.docker.com/desktop/install/windows-install/ -> Docker Desktop for Windows
-    - Restart Computer
+    - Make sure you have Windows Subsystem for Linux:
+
+        ```
+        wsl -l -v
+        ```
+
+    - If you need to install it:
+
+        ```
+        wsl --install
+        ```
+
+    - Open the distribution ('Ubuntu' in the Start Menu) to register.
+        - After clicking on Ubuntu, you will be asked to create a User Name and Password for your Linux distribution.
+            - This User Name and Password is specific to each separate Linux distribution that you install and has no bearing on your Windows user name.
+            - Please note that whilst entering the Password, nothing will appear on screen. This is called blind typing. You won't see what you are typing, this is completely normal.
+        - Once you create a User Name and Password, the account will be your default user for the distribution and automatically sign-in on launch.
+            - This account will be considered the Linux administrator, with the ability to run sudo (Super User Do) administrative commands.
+
+        ```
+        mylesthomas
+        Myle$
+        ```
+
+    - Upgrade version from WSL 1 to WSL 2 (if necessary, should not be!):
+
+        - New Linux installations, installed using the wsl --install command, will be set to WSL 2 by default.
+        
+        - Check that you are on WSL 2:
+
+            ```
+            wsl -l -v
+            ```
+
+        - For example, the following will set your Ubuntu 20.04 distribution to use WSL 2
+
+            ```
+            wsl --set-version Ubuntu-20.04 2
+            ```
+
+    - Once you have WSL2 setup, proceed.
+
+    - Download Docker Desktop: https://docs.docker.com/desktop/install/windows-install/ -> Docker Desktop for Windows
+
+    - Log Out/Restart Computer
+    
     - Check that Docker works:
         - Start Docker Desktop
 
-        - Try these commands:
+        - Try these commands in command prompt:
+
+            ```
+            wsl -l -v
+            ```
+
+            - This should return 'Running' and VERSION 2 for the following NAME:
+                - docker-desktop
+                - Ubuntu
+                - docker-desktop-data
+
+            - Note: We want the default WSL to still be Ubuntu, not either of the 'docker-desktop' or 'docker-desktop-data'. (I ended up getting the following error later on when I did NOT do this step before deploying my code to Astro via `astroy deploy`)
+
+            - This will change the default WSL to Ubuntu:
+
+            ```
+            wsl -s Ubuntu
+            ```
+
+            - After this step, do the following to ensure that WSL/Ubuntu is working properly:
+                - Quit VSCode / any terminals running
+                - Optional (I couldn't find this file so did not do it): delete `.vscode-server` in Ubuntu terminal (so it would rebuild it cleanly on rerunning vscode later after the above fix) 
+                - In a new command prompt/terminal, shutdown WSL2: `wsl --shutdown`
+                    - as expected, I got a notification from Docker Desktop about unexpectedly closed and would I like to restart, with a button to restart.
+                    - This was to be expected following the shutdown command above, so I did this:
+                        - Clicked 'restart' for docker desktop
+                        - Wait for the little docker whale and cargo to stop animating (??)
+                        - Run Ubuntu again
+                        - Type `code` into Ubuntu to open up another VSCode instance
+                            -"WSL: Ubuntu" should show in the buttom-left corner (It did not for me but...)
 
             ```
             docker version
+            ```
+
+            - This should return 'Docker Desktop 4.27.2 (137060)' etc.
+
+            ```
             docker ps
             ```
 
+            - This should return 'CONTAINER ID', 'IMAGE', etc., but with no rows (there are no running containers!)
 
-7. Deploy your DAG
+            
+7. Make sure that your requirements.txt, DockerFile, etc. are _
+
+Setup a virtual Python environment:
+
+```
+py -m venv env
+```
+
+You should now see a folder 'env' with a python.exe program in the /Scripts directory.
+
+Activate the virtual environment in the terminal:
+
+```
+.\env\Scripts\activate
+```
+
+Note: Remember that you can always leave the virtual environment with this call:
+
+```
+deactivate
+```
+
+Install the necessary packages into your virtual environment:
+
+```take out: apache-airflow pendulum
+
+pip install pandas numpy yfinance google-cloud google-cloud-bigquery google-cloud-storage pyarrow
+
+```
+
+Note: Make sure you are as minimalist as possible here, it can lead to errors:
+- Error message: ERROR: failed to solve: process "/bin/bash -o pipefail -e -u -x -c if grep -Eqx 'apache-airflow\\s*[=~>]{1,2}.*' requirements.txt; then     echo >&2 \"Do not upgrade by specifying 'apache-airflow' in your requirements.txt, change the base image instead!\";  exit 1;   fi;   pip install --no-cache-dir --root-user-action=ignore -r requirements.txt" did not complete successfully: exit code: 1
+- Remedy: Stopped `astro dev stop, astro dev start` (`astro dev restart` could have worked probably...)
+
+
+Create a requirements.txt file to ensure that you have the necessary dependencies to run this code:
+
+```
+python -m pip freeze > requirements.txt
+```
+
+Optional - Note: I needed to run the following separately to get my script to run locally:
+
+```
+python -m pip install --upgrade pip
+pip install --upgrade google-cloud
+pip install --upgrade google-cloud-bigquery
+pip install --upgrade google-cloud-storage
+pip install pyarrow
+```
+
+8. Deploy your DAG
 - Instructions:
     - Make sure you are logged in:
 
@@ -693,7 +836,41 @@ Directions:
         
         - You should see 'Temp Workspace', as that is what we named it at the start.
 
-    - Deploy:
+    - Test our project in a local airflow environment:
+
+        ```
+        astro dev start
+        ```
+
+        Note: The default Airflow UI Credentials are provided in the terminal
+
+            - username/password: admin
+
+    - Apply changes to a running project:
+
+        - If you want to make changes ie. packages.txt, DockerFile, requirements.txt, or airflow_settings.yaml, you must restart your local Airflow environment:
+
+            ```
+            astro dev restart
+            ```
+
+    - Stop your local Airflow environment (this pauses all Docker containers and stops running the local Airflow environment):
+
+        ```
+        astro dev stop
+        ```
+
+        - This is what I ran when I had an import error at the top of `my_first_dag.py`
+
+    - View Airflow component logs (Useful if you want to troubleshoot a specific task, or if your local environment is not running properly after a code change):
+
+        ```
+        astro dev logs
+        ```
+
+    - Once your code can run locally, you may proceed.
+
+    - Deploy our code to a deployment on Astro:
 
         ```
         astro deploy
@@ -701,7 +878,7 @@ Directions:
         
         - Select '1' for 'Deployment1'
 
-    - Note: I was getting errors here ie. 'Project directory has uncommitted changes, use `astro deploy [deployment-id] -f` to force deploy.'
+    - Note: At one point, I was getting errors here ie. 'Project directory has uncommitted changes, use `astro deploy [deployment-id] -f` to force deploy.'
         - Remedy: Go back to `data_engineering_project` and push changes to git regularly.
 
     - Check on your deployment in the UI:
@@ -710,9 +887,22 @@ Directions:
             - This means it is currently installing the Docker image onto the Airflow environment
             - In a few minutes, the Deployment should be 'Healthy' and we will be able to see the DAGs we pushed to this airflow environment
 
+        - Head into Deployment1 and make sure that the DAGs you want running are unpaused.
+            - You should be good to go and sit back and let your DAG run on its daily/etc. schedule!
+
+    - Debugging your DAGs:
+        - Example: Your DAG is successfully deployed to the cloud via `astro deploy`, and your DAG has 3 steps: Extract, Transform, Load. Extract and Transform are successful, but Load is not
+            - How to find the error message: Astro -> DAGs -> Find the problematic DAG -> Open in Airflow -> Grid -> Click on Failed Task -> Logs
+        
+        - After fixing your .py file, click the 'Trigger DAG' button on the right side of Airflow
+            - Continue this iterative process until you are able to get the entire DAG/.py file to run as expected!
+
 
 8. Monitor
 - Instructions:
+    - Setup Alerts for if/when your DAG(s) fail:
+        - Astro -> Left pane 'Alerts' -> +DAG
+
     - Go back to your Cloud UI
     - Click 'Get Analytics' on your deployment screen
         - You will now see the DAG runs/tasks runs over the time period you choose!
@@ -723,6 +913,89 @@ WARNING: Airflow is designed to handle orchestration of data pipelines in batche
 
 # 6. Connect something like Tableau to your data warehouse and build a fancy chart that updates to show off your hard work!
 
+Instructions:
+- Go to Tableau and setup a free account
+    - Link: https://www.tableau.com/products/desktop/download
+    - Click to open the downloaded file
+    - Follow prompts to install Tableau
+        - Use the 14 day free trial for now
+    - Open Tableau, complete registration form
+
+- Connect to your Data Source
+    - Connect -> Google BigQuery
+        - Sign in using OAuth -> Sign into Google Account -> Continue -> Allow -> Close the window
+
+    - At this point, you should see 'My First Project' with dataset 'crypto_dataset_v1' and your tables.
+        - If you do not, try the following:
+            - Make sure that you do not have overlap with the names of your Google Cloud Projects (I initially had 2 Projects named 'My First Project', and once I deleted the old one and restarted Tableau/made a new connection to Google BigQuery, everything worked just fine!)
+
+        - If your Tableau Desktop email is different than your Google Cloud email, add the user to the OAuth Config Viewer role:
+            - Access Google Cloud: https://console.cloud.google.com/?hl=en
+            - Select the project: My First Project (Remember: ID = turnkey-timer-416503)
+            - Search Bar -> Menu > I AM & Admin.
+            - Click ADD and add the target service account.
+                - mylescgthomas@gmail.com
+    
+- Drag/drop tables you will be using from left window pane into the dashboard area
+    - My tables: 
+        - prices_from_last_week
+        - max_hourly_returns
+
+- Save your Tableau Workbook (This will prevent you from having to login/authenticate again)
+    - filename: 03-11-2024 - Crypto Workbook
+
+- Create your sheets:
+    - Sheet1 -> CryptoPriceGraphByTicker:
+        - table: prices_from_past_week
+        - x axis (rows): price (average)
+            - right click -> format -> in left pane, 'Currency (Standard)'
+        - y axis (columns): date (day, not month/year)
+        - color: ticker
+        - graph type: lines (discrete)
+
+    - Sheet2 -> CryptoMaxHourlyReturnByTicker:
+        - table: max_hourly_returns
+        - x axis (rows): max return
+            - right click -> format -> in left pane, 'Currency (Standard)'
+        - y axis (columns): ticker
+        - color: ticker (optional)
+        - graph type: horizontal bar graph
+
+- Create a Dashboard for your sheets:
+    - New text object: "Crypto Dashboard"
+    - Drag/drop the sheets we created
+    - Rename Dashboard: Home Page
+
+- Save Workbook
+
+- Create data extract:
+    - Data Source -> Check box for 'Extract' -> Press Edit -> Save Settings
+    - Click on a sheet ie. Home Page -> Save data extract as 'data_extract.hyper'
+
+- Publish to the Cloud (Tableau Server/Tableau Public)
+    - With your workbook open in Tableau Desktop, select Server > Tableau Public > Save to Tableau Public As...
+        - Note: This option is available only if you’ve created a viz that contains at least one field.
+    
+    - Sign in using your Tableau Public account.
+        - If you don’t have an account, select the link to create a new one.
+
+    - Type a name for the workbook and click Save.
+        - filename: '03-11-2024 - Crypto Workbook'
+        - The published dashboard should now open up in your browser.
+            - Take down the URL: https://public.tableau.com/app/profile/myles.thomas/viz/03-11-2024-CryptoWorkbook/HomePage?publish=yes
+
+- Update your dashboard:
+    - Make some changes
+    - Repeat the previous steps
+    - Save -> Overwrite 'Yes' (This will overwrite the previous dashboard, and once the data is sent to the server, you should see the updated dashboard in your browser) 
+
+
+- Refresh Data on a Schedule:
+    - Reason: Data Extracts are required for Tableau Servers, and in order to keep the data fresh, we will need to schedule refresh tasks for published extract data sources and published workbooks that connect to extracts
+    - tbd ... will come back to this because features appear to be limited on Tableau Public
+    - Potential Remedies:
+        - 
+        - Tableau Data Extract Command-Line Utility
 
 
 ---
@@ -740,6 +1013,13 @@ WARNING: Airflow is designed to handle orchestration of data pipelines in batche
 9. [How to Get Started with Astro!](https://www.youtube.com/watch?v=Gvw1QZ4oUiw&t=45s)
 10. [Docker cannot start on Windows](https://stackoverflow.com/questions/40459280/docker-cannot-start-on-windows)
 11. [Troubleshoot topics for Docker Desktop](https://docs.docker.com/desktop/troubleshoot/topics/#virtualization)
-12. []()
-13. []()
+12. [bash fails on WSL2: filesystem mounting error](https://github.com/microsoft/WSL/issues/5923)
+13. [When Connecting to Google Big Query from Tableau Desktop, the Target Project is not Displayed](https://kb.tableau.com/articles/issue/when-connecting-to-google-big-query-from-tableau-desktop-the-target-project-is-not-displayed#:~:text=Resolution,Cloud%20by%20doing%20the%20following.&text=2.)
+14. [Save Workbooks to Tableau Public](https://help.tableau.com/current/pro/desktop/en-us/publish_workbooks_tableaupublic.htm?_gl=1*1hn9g0o*_ga*MTg2MDcyNDg1NC4xNzEwMTc1MTA3*_ga_8YLN0SNXVS*MTcxMDE3OTYxMC4yLjAuMTcxMDE3OTYxMC4wLjAuMA..)
+15. [Create or Modify a Schedule](https://help.tableau.com/current/server/en-us/schedule_manage_create.htm)
+16. [Tableau Data Extract Command-Line Utility](https://help.tableau.com/current/pro/desktop/en-us/extracting_TDE.htm)
+17. [Debug DAGs](https://docs.astronomer.io/learn/debugging-dags)
+18. [Connect to Google API via Python in Astronomer](https://forum.astronomer.io/t/connect-to-google-api-via-python-in-astronomer/1242)
+19. [How do I list all files of a directory?](https://stackoverflow.com/questions/3207219/how-do-i-list-all-files-of-a-directory)
+20. []()
 
