@@ -663,7 +663,14 @@ Directions:
         - My first filename: `my_first_dag.py`
             - Add the same logic that you created in the initial `main.py` file that is interacting with BigQuery.
 
-            - Note: MAKE SURE THAT YOU HAVE THE NECESSARY KEYS ie. key.json in the project directory! (Trying out both the root directory, which did NOT work, and the /include directory...)
+            - Note: MAKE SURE THAT YOU HAVE THE NECESSARY KEYS ie. key.json in the project directory! (Use the /include directory)
+
+                - Make sure if you have secrets/credentials uploaded, that they do not go up to Github. For example, add the following to your .gitignore:
+
+                    ```
+                    key.json
+                    include/key.json
+                    ```
 
     - Now that your dag is ready for testing, let's setup Docker so that we can test our project in a local airflow environment, and eventually deploy our code to a Deployment on Astro.
 
