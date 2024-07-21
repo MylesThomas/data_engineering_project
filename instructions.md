@@ -851,7 +851,7 @@ pip install pyarrow
 
         Note: The default Airflow UI Credentials are provided in the terminal
 
-            - username/password: admin
+            - username/password: admin:admin (ie. both pw's are admin)
 
     - Apply changes to a running project:
 
